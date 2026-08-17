@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Checklist and To-Do List</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #1d4ed8;
+      --accent-dark: #1e40af;
+      --border: #d1d5db;
+      --success: #166534;
+      --danger: #b91c1c;
+      --warning-bg: #fff7ed;
+      --warning-border: #fdba74;
+      --warning-text: #9a3412;
+      --high: #fee2e2;
+      --medium: #fef3c7;
+      --low: #dcfce7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      color: var(--accent);
+      font-size: 2rem;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--accent);
+      font-size: 1.35rem;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 8px;
+    }
+
+    p.subtitle {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .field-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #374151;
+    }
+
+    input[type="date"], input[type="text"], select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      background: white;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .warning {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      color: var(--warning-text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .primary { background: var(--accent); color: white; }
+    .primary:hover { background: var(--accent-dark); }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .danger { background: #fee2e2; color: var(--danger); }
+    .success { background: #dcfce7; color: var(--success); }
+
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .task-entry {
+      display: grid;
+      grid-template-columns: 1.5fr 160px 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 12px;
+    }
+
+    ul.checklist {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0 0;
+    }
+
+    li.item {
+      display: grid;
+      grid-template-columns: 34px 150px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: #ffffff;
+    }
+
+    li.item:hover { background: #f9fafb; }
+
+    input[type="checkbox"] {
+      transform: scale(1.25);
+      accent-color: var(--accent);
+      cursor: pointer;
+      justify-self: center;
+    }
+
+    .priority-badge {
+      display: inline-block;
+      text-align: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      border: 1px solid #d1d5db;
+    }
+
+    .priority-high { background: var(--high); color: #991b1b; }
+    .priority-medium { background: var(--medium); color: #92400e; }
+    .priority-low { background: var(--low); color: #166534; }
+
+    .task-text {
+      min-height: 42px;
+    }
+
+    .done .task-text {
+      text-decoration: line-through;
+      color: var(--success);
+    }
+
+    .empty-state {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      text-align: center;
+      background: #f9fafb;
+    }
+
+    .history-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      background: #f9fafb;
+    }
+
+    .history-item strong { color: var(--accent); }
+
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 850px) {
+      .top-grid, .task-entry, li.item {
+        grid-template-columns: 1fr;
+      }
+      input[type="checkbox"] { justify-self: start; }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container { max-width: none; }
+      .card {
+        box-shadow: none;
+        border: 1px solid #999;
+        break-inside: avoid;
+      }
+      .controls, .task-entry, .note, .warning, .delete-btn, #historyCard {
+        display: none !important;
+      }
+      input, select, textarea {
+        border: none;
+      }
+      h1, h2 { color: black; }
+      li.item {
+        grid-template-columns: 34px 130px 1fr;
+      }
+      li.item button { display: none; }
+      footer { color: black; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Daily Checklist and To-Do List</h1>
+      <p class="subtitle">Interactive daily task tracker with check marks, priorities, saved progress, print support, and local history.</p>
+
+      <div class="top-grid">
+        <div class="field-group">
+          <label for="workDate">Date</label>
+          <input type="date" id="workDate" />
+        </div>
+        <div class="field-group">
+          <label for="ownerName">Owner</label>
+          <input type="text" id="ownerName" placeholder="Example: Noe Tovar" />
+        </div>
+        <div class="field-group">
+          <label for="dayStatus">Day Status</label>
+          <select id="dayStatus">
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Carried Over">Carried Over</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-top: 14px;">
+        <label for="dailyNotes">Daily Notes / Summary</label>
+        <textarea id="dailyNotes" placeholder="Enter important notes, blockers, follow-ups, or end-of-day summary here."></textarea>
+      </div>
+
+      <div class="warning">
+        <strong>Reminder:</strong> Use the Save Progress button to store the current day in your browser. Use Print / Save as PDF when you need a copy for tracking, email, or historical records.
+      </div>
+
+      <div class="controls">
+        <button class="primary" onclick="saveProgress(true)">Save Progress</button>
+        <button class="secondary" onclick="clearChecks()">Clear All Checks</button>
+        <button class="secondary" onclick="clearAllTasks()">Clear All Tasks</button>
+        <button class="success" onclick="saveSnapshotToHistory()">Save Snapshot to History</button>
+        <button class="primary" onclick="printChecklist()">Print / Save as PDF</button>
+      </div>
+      <p class="note">Your checklist is saved in this browser using local storage. If you clear browser data or use another PC, the saved checklist may not be available.</p>
+    </div>
+
+    <div class="card">
+      <h2>Task Entry</h2>
+      <div class="task-entry">
+        <div class="field-group">
+          <label for="newTaskText">Task</label>
+          <input type="text" id="newTaskText" placeholder="Enter a task or to-do item" />
+        </div>
+        <div class="field-group">
+          <label for="newTaskPriority">Priority</label>
+          <select id="newTaskPriority">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="newTaskCategory">Category / Notes</label>
+          <input type="text" id="newTaskCategory" placeholder="Optional: Tickets, CR, Server, Follow-up" />
+        </div>
+        <button class="primary" onclick="addTask()">Add Task</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Today's Checklist</h2>
+      <div class="controls" style="margin-top: 0;">
+        <button class="secondary" onclick="sortTasksByPriority()">Sort by Priority</button>
+        <button class="secondary" onclick="sortTasksByStatus()">Sort by Checked Status</button>
+      </div>
+      <ul class="checklist" id="taskList"></ul>
+      <div class="empty-state" id="emptyState">No tasks have been added yet. Enter a task above and select a priority to begin.</div>
+    </div>
+
+    <div class="card" id="historyCard">
+      <h2>Saved History</h2>
+      <div class="controls" style="margin-top: 0;">
+        <button class="secondary" onclick="loadHistory()">Refresh History</button>
+        <button class="danger" onclick="clearHistory()">Clear History</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+
+    <footer>◇ Automation &nbsp;&nbsp;•&nbsp;&nbsp; Productivity Design 2026 &nbsp;&nbsp;•&nbsp;&nbsp; WebMaster Noe Tovar-MBA</footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'dailyChecklistTodoTool';
+    const HISTORY_KEY = 'dailyChecklistTodoToolHistory';
+    let tasks = [];
+
+    function todayDate() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function priorityRank(priority) {
+      if (priority === 'High') return 1;
+      if (priority === 'Medium') return 2;
+      return 3;
+    }
+
+    function getPriorityClass(priority) {
+      if (priority === 'High') return 'priority-high';
+      if (priority === 'Medium') return 'priority-medium';
+      return 'priority-low';
+    }
+
+    function createTaskId() {
+      return 'task-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+    }
+
+    function addTask() {
+      const textInput = document.getElementById('newTaskText');
+      const priorityInput = document.getElementById('newTaskPriority');
+      const categoryInput = document.getElementById('newTaskCategory');
+      const taskText = textInput.value.trim();
+
+      if (!taskText) {
+        alert('Please enter a task before adding it to the checklist.');
+        textInput.focus();
+        return;
+      }
+
+      tasks.push({
+        id: createTaskId(),
+        text: taskText,
+        priority: priorityInput.value,
+        category: categoryInput.value.trim(),
+        checked: false,
+        createdAt: new Date().toLocaleString()
+      });
+
+      textInput.value = '';
+      categoryInput.value = '';
+      priorityInput.value = 'Medium';
+      renderTasks();
+      saveProgress(false);
+      textInput.focus();
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      const emptyState = document.getElementById('emptyState');
+      taskList.innerHTML = '';
+
+      if (tasks.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'item' + (task.checked ? ' done' : '');
+        li.dataset.id = task.id;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.checked;
+        checkbox.title = 'Mark task complete';
+        checkbox.addEventListener('change', () => {
+          task.checked = checkbox.checked;
+          renderTasks();
+          saveProgress(false);
+        });
+
+        const priority = document.createElement('select');
+        priority.value = task.priority;
+        ['High', 'Medium', 'Low'].forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          priority.appendChild(option);
+        });
+        priority.className = 'priority-badge ' + getPriorityClass(task.priority);
+        priority.addEventListener('change', () => {
+          task.priority = priority.value;
+          renderTasks();
+          saveProgress(false);
+        });
+
+        const textWrap = document.createElement('div');
+        const text = document.createElement('input');
+        text.type = 'text';
+        text.className = 'task-text';
+        text.value = task.text;
+        text.placeholder = 'Enter task details';
+        text.addEventListener('input', () => {
+          task.text = text.value;
+          saveProgress(false);
+        });
+
+        const category = document.createElement('input');
+        category.type = 'text';
+        category.value = task.category || '';
+        category.placeholder = 'Optional notes / category';
+        category.style.marginTop = '6px';
+        category.addEventListener('input', () => {
+          task.category = category.value;
+          saveProgress(false);
+        });
+
+        textWrap.appendChild(text);
+        textWrap.appendChild(category);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'danger delete-btn';
+        deleteButton.onclick = () => deleteTask(task.id);
+
+        li.appendChild(checkbox);
+        li.appendChild(priority);
+        li.appendChild(textWrap);
+        li.appendChild(deleteButton);
+        taskList.appendChild(li);
+      });
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(task => task.id !== id);
+      renderTasks();
+      saveProgress(false);
+    }
+
+    function collectPageState() {
+      return {
+        workDate: document.getElementById('workDate').value,
+        ownerName: document.getElementById('ownerName').value,
+        dayStatus: document.getElementById('dayStatus').value,
+        dailyNotes: document.getElementById('dailyNotes').value,
+        tasks: tasks
+      };
+    }
+
+    function saveProgress(showAlert = true) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collectPageState()));
+      if (showAlert) alert('Checklist progress saved.');
+    }
+
+    function loadProgress() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      document.getElementById('workDate').value = todayDate();
+
+      if (!saved) {
+        renderTasks();
+        loadHistory();
+        return;
+      }
+
+      try {
+        const state = JSON.parse(saved);
+        document.getElementById('workDate').value = state.workDate || todayDate();
+        document.getElementById('ownerName').value = state.ownerName || '';
+        document.getElementById('dayStatus').value = state.dayStatus || 'Not Started';
+        document.getElementById('dailyNotes').value = state.dailyNotes || '';
+        tasks = Array.isArray(state.tasks) ? state.tasks : [];
+      } catch (error) {
+        console.error('Unable to load saved checklist:', error);
+        tasks = [];
+      }
+
+      renderTasks();
+      loadHistory();
+    }
+
+    function clearChecks() {
+      tasks.forEach(task => task.checked = false);
+      renderTasks();
+      saveProgress(false);
+    }
+
+    function clearAllTasks() {
+      if (!confirm('This will remove all tasks from the current checklist. Continue?')) return;
+      tasks = [];
+      document.getElementById('dailyNotes').value = '';
+      document.getElementById('dayStatus').value = 'Not Started';
+      renderTasks();
+      saveProgress(false);
+    }
+
+    function sortTasksByPriority() {
+      tasks.sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+      renderTasks();
+      saveProgress(false);
+    }
+
+    function sortTasksByStatus() {
+      tasks.sort((a, b) => Number(a.checked) - Number(b.checked));
+      renderTasks();
+      saveProgress(false);
+    }
+
+    function saveSnapshotToHistory() {
+      const snapshot = collectPageState();
+      snapshot.savedAt = new Date().toLocaleString();
+      snapshot.completedCount = tasks.filter(task => task.checked).length;
+      snapshot.totalCount = tasks.length;
+
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      history.unshift(snapshot);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      loadHistory();
+      alert('Snapshot saved to local history.');
+    }
+
+    function loadHistory() {
+      const historyList = document.getElementById('historyList');
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      historyList.innerHTML = '';
+
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="empty-state">No saved history yet. Use Save Snapshot to History when you want to archive the current checklist.</div>';
+        return;
+      }
+
+      history.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        const taskSummary = (entry.tasks || []).map(task => {
+          const status = task.checked ? '✓' : '☐';
+          return '<li>' + status + ' [' + task.priority + '] ' + escapeHtml(task.text || '') + '</li>';
+        }).join('');
+
+        div.innerHTML =
+          '<strong>' + escapeHtml(entry.workDate || 'No Date') + '</strong>' +
+          ' — Saved: ' + escapeHtml(entry.savedAt || '') +
+          ' — Status: ' + escapeHtml(entry.dayStatus || '') +
+          ' — Completed: ' + (entry.completedCount || 0) + '/' + (entry.totalCount || 0) +
+          '<details style="margin-top: 8px;"><summary>View snapshot details</summary>' +
+          '<p><strong>Owner:</strong> ' + escapeHtml(entry.ownerName || '') + '</p>' +
+          '<p><strong>Notes:</strong> ' + escapeHtml(entry.dailyNotes || '') + '</p>' +
+          '<ul>' + taskSummary + '</ul>' +
+          '<button class="secondary" onclick="restoreHistoryItem(' + index + ')">Restore This Snapshot</button>' +
+          '</details>';
+
+        historyList.appendChild(div);
+      });
+    }
+
+    function restoreHistoryItem(index) {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      const entry = history[index];
+      if (!entry) return;
+      document.getElementById('workDate').value = entry.workDate || todayDate();
+      document.getElementById('ownerName').value = entry.ownerName || '';
+      document.getElementById('dayStatus').value = entry.dayStatus || 'Not Started';
+      document.getElementById('dailyNotes').value = entry.dailyNotes || '';
+      tasks = Array.isArray(entry.tasks) ? entry.tasks : [];
+      renderTasks();
+      saveProgress(false);
+      alert('History snapshot restored to the current checklist.');
+    }
+
+    function clearHistory() {
+      if (!confirm('This will permanently clear the saved local history in this browser. Continue?')) return;
+      localStorage.removeItem(HISTORY_KEY);
+      loadHistory();
+    }
+
+    function printChecklist() {
+      saveProgress(false);
+      window.print();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    ['workDate', 'ownerName', 'dayStatus', 'dailyNotes'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => saveProgress(false));
+      document.getElementById(id).addEventListener('change', () => saveProgress(false));
+    });
+
+    document.getElementById('newTaskText').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') addTask();
+    });
+
+    loadProgress();
+  </script>
+</body>
+</html>
